@@ -4,7 +4,7 @@
 # educational purposes provided that (1) you do not distribute or publish
 # solutions, (2) you retain this notice, and (3) you provide clear
 # attribution to UC Berkeley, including a link to http://ai.berkeley.edu.
-# 
+#
 # Attribution Information: The Pacman AI projects were developed at UC Berkeley.
 # The core projects and autograders were primarily created by John DeNero
 # (denero@cs.berkeley.edu) and Dan Klein (klein@cs.berkeley.edu).
@@ -18,7 +18,8 @@ Pacman agents (in searchAgents.py).
 """
 
 import util
-
+import math
+import numpy as np
 class SearchProblem:
     """
     This class outlines the structure of a search problem, but doesn't implement
@@ -62,6 +63,7 @@ class SearchProblem:
         util.raiseNotDefined()
 
 
+
 def tinyMazeSearch(problem):
     """
     Returns a sequence of moves that solves tinyMaze.  For any other maze, the
@@ -73,38 +75,138 @@ def tinyMazeSearch(problem):
     return  [s, s, w, s, w, w, s, w]
 
 def depthFirstSearch(problem):
-    """
-    Search the deepest nodes in the search tree first.
+    marked = set()
+    st = util.Stack()
+    root = problem.getStartState()
+    st.push(root) # (x, y)
+    pathTo = {root : []}
+    actionTo = {root : []}
+    goal_state = None
+    while not st.isEmpty():
+        curr = st.pop()
+        if curr not in marked:
+            marked.add(curr)
+        if problem.isGoalState(curr):
+            goal_state = curr
+            break
+        for succ, action, cost in problem.getSuccessors(curr):
+            if succ not in marked:
+                pathTo[succ] = curr
+                actionTo[succ] = action
+                st.push(succ)
+    if goal_state == None:
+        raise AssertionError("No valid path found!!")
 
-    Your search algorithm needs to return a list of actions that reaches the
-    goal. Make sure to implement a graph search algorithm.
+    path = [goal_state]
+    action_path = []
+    while goal_state != root:
+        if pathTo[goal_state]:
+            path.append(pathTo[goal_state])
+            action_path.append(actionTo[goal_state])
+        goal_state = pathTo[goal_state]
 
-    To get started, you might want to try some of these simple commands to
-    understand the search problem that is being passed in:
+    return action_path[::-1]
 
-    print "Start:", problem.getStartState()
-    print "Is the start a goal?", problem.isGoalState(problem.getStartState())
-    print "Start's successors:", problem.getSuccessors(problem.getStartState())
-    """
-    "*** YOUR CODE HERE ***"
-    util.raiseNotDefined()
+
+
 
 def breadthFirstSearch(problem):
-    """Search the shallowest nodes in the search tree first."""
-    "*** YOUR CODE HERE ***"
-    util.raiseNotDefined()
+    marked = set()
+    q = util.Queue()
+    root = problem.getStartState()
+    q.push(root) # (x, y)
+    pathTo = {root : []}
+    actionTo = {root : []}
+    goal_state = None
+    marked.add(root)
+    while not q.isEmpty():
+        curr = q.pop()
+        if problem.isGoalState(curr):
+            goal_state = curr
+            break
+        for succ, action, cost in problem.getSuccessors(curr):
+            if succ not in marked:
+                marked.add(succ)
+                pathTo[succ] = curr
+                actionTo[succ] = action
+                q.push(succ)
+
+    if goal_state == None:
+        raise AssertionError("No valid path found!!")
+
+    path = [goal_state]
+    action_path = []
+    while goal_state != root:
+        if pathTo[goal_state]:
+            path.append(pathTo[goal_state])
+            action_path.append(actionTo[goal_state])
+        goal_state = pathTo[goal_state]
+
+    return action_path[::-1]
 
 def iterativeDeepeningSearch(problem):
-    """
-    Start with depth = 0.
-    Search the deepest nodes in the search tree first up to a given depth.
-    If solution not found, increment depth limit and start over.
+    depth = 0
+    found = False
 
-    Your search algorithm needs to return a list of actions that reaches the
-    goal. Make sure to implement a graph search algorithm.
-    """
-    "*** YOUR CODE HERE ***"
-    util.raiseNotDefined()
+    mylayout = np.zeros((problem.walls.height, problem.walls.width), dtype=int)
+    print(mylayout)
+    np.set_printoptions(threshold='nan')
+
+    while not found:
+        mylayout = np.zeros((problem.walls.height, problem.walls.width))
+        st = util.Stack()
+        root = problem.getStartState()
+        st.push((root, 0)) # (x, y)
+        marked = set()
+        bestCostTo = {root: 0}
+        pathTo = {root : []}
+        actionTo = {root : []}
+        goal_state = None
+        mylayout[problem.walls.height - root[1], root[0]] = 33
+
+        print "\n\n\n DEPTH = ", depth
+        while not st.isEmpty() and not found:
+            curr, curr_d = st.pop()
+            if curr not in marked:
+                marked.add(curr)
+            if problem.isGoalState(curr):
+                goal_state = curr
+                found = True
+            if curr_d + 1 <= depth:
+                for succ, action, cost in problem.getSuccessors(curr):
+                    if succ not in marked or bestCostTo[curr] + cost < bestCostTo[succ]:
+                        pathTo[succ] = curr
+                        actionTo[succ] = action
+                        bestCostTo[succ] = bestCostTo[curr] + cost
+                        mylayout[problem.walls.height - succ[1], succ[0]] = bestCostTo[succ]
+                        st.push((succ, curr_d + 1))
+        depth+=1
+        for i in range(problem.walls.height):
+            for j in range(problem.walls.width):
+                if problem.walls[j][i]:
+                    try:
+                        mylayout[problem.walls.height - i, j] = -1
+                    except:
+                        print ""
+
+        for i in range(mylayout.shape[0]):
+            print (list(map(lambda x: str(int(x)).zfill(2), list(mylayout[i]))))
+
+        print "\n\n"
+
+    if goal_state == None:
+        raise AssertionError("No valid path found!!")
+
+    path = [goal_state]
+    action_path = []
+    while goal_state != root:
+        if pathTo[goal_state]:
+            path.append(pathTo[goal_state])
+            action_path.append(actionTo[goal_state])
+        goal_state = pathTo[goal_state]
+    print action_path[::-1]
+    return action_path[::-1]
+
 
 def uniformCostSearch(problem):
     """Search the node of least total cost first."""
