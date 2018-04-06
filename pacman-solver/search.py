@@ -19,7 +19,6 @@ Pacman agents (in searchAgents.py).
 
 import util
 import math
-import numpy as np
 class SearchProblem:
     """
     This class outlines the structure of a search problem, but doesn't implement
@@ -145,15 +144,10 @@ def breadthFirstSearch(problem):
     return action_path[::-1]
 
 def iterativeDeepeningSearch(problem):
-    depth = 8
+    depth = 0
     found = False
 
-    mylayout = np.zeros((problem.walls.height, problem.walls.width), dtype=int)
-    print(mylayout)
-    np.set_printoptions(threshold='nan')
-
     while not found:
-        mylayout = np.zeros((problem.walls.height, problem.walls.width))
         st = util.Stack()
         root = problem.getStartState()
         st.push((root, 0)) # (x, y)
@@ -162,9 +156,6 @@ def iterativeDeepeningSearch(problem):
         pathTo = {root : []}
         actionTo = {root : []}
         goal_state = None
-        mylayout[problem.walls.height - root[1], root[0]] = 33
-
-        print "\n\n\n DEPTH = ", depth
         while not st.isEmpty() and not found:
             curr, curr_d = st.pop()
             if curr not in marked:
@@ -172,46 +163,21 @@ def iterativeDeepeningSearch(problem):
             if problem.isGoalState(curr):
                 goal_state = curr
                 found = True
-            #print "curr = ", curr            
-            #print "bestCostTo = ", bestCostTo
             if curr_d + 1 <= depth:
                 for succ, action, cost in problem.getSuccessors(curr):
-                    if succ not in marked:
-                        bcost = bestCostTo.get(succ, None)
-                        if bcost:
-                            if bestCostTo[curr] + cost < bcost:
-                                pathTo[succ] = curr
-                                actionTo[succ] = action
-                                bestCostTo[succ] = bestCostTo[curr] + cost
-                                mylayout[problem.walls.height - succ[1], succ[0]] = bestCostTo[succ]
-                                st.push((succ, curr_d + 1))
-                        else:
+                    bcost = bestCostTo.get(succ, None)
+                    if succ not in marked and not bcost or (bcost and  bestCostTo[curr] + cost < bcost):
                             pathTo[succ] = curr
                             actionTo[succ] = action
                             bestCostTo[succ] = bestCostTo[curr] + cost
-                            mylayout[problem.walls.height - succ[1], succ[0]] = bestCostTo[succ]
                             st.push((succ, curr_d + 1))
-                    elif bestCostTo.get(succ, None) and bestCostTo[curr] + cost < bestCostTo.get(succ, None):
+                    elif bcost and bestCostTo[curr] + cost < bcost:
                         pathTo[succ] = curr
                         actionTo[succ] = action
                         bestCostTo[succ] = bestCostTo[curr] + cost
-                        mylayout[problem.walls.height - succ[1], succ[0]] = bestCostTo[succ]
                         st.push((succ, curr_d + 1))
                 #print "stack = ", st.list
         depth+=1
-        
-        for i in range(problem.walls.height):
-            for j in range(problem.walls.width):
-                if problem.walls[j][i]:
-                    try:
-                        mylayout[problem.walls.height - i, j] = -1
-                    except:
-                        print ""
-        
-        for i in range(mylayout.shape[0]):
-            print (list(map(lambda x: str(int(x)).zfill(2), list(mylayout[i]))))
-
-        print "\n\n"
 
     if goal_state == None:
         raise AssertionError("No valid path found!!")
@@ -223,7 +189,7 @@ def iterativeDeepeningSearch(problem):
             path.append(pathTo[goal_state])
             action_path.append(actionTo[goal_state])
         goal_state = pathTo[goal_state]
-    print action_path[::-1]
+
     return action_path[::-1]
 
 
