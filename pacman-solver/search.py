@@ -145,7 +145,7 @@ def breadthFirstSearch(problem):
     return action_path[::-1]
 
 def iterativeDeepeningSearch(problem):
-    depth = 0
+    depth = 8
     found = False
 
     mylayout = np.zeros((problem.walls.height, problem.walls.width), dtype=int)
@@ -172,15 +172,34 @@ def iterativeDeepeningSearch(problem):
             if problem.isGoalState(curr):
                 goal_state = curr
                 found = True
+            #print "curr = ", curr            
+            #print "bestCostTo = ", bestCostTo
             if curr_d + 1 <= depth:
                 for succ, action, cost in problem.getSuccessors(curr):
-                    if succ not in marked or bestCostTo[curr] + cost < bestCostTo[succ]:
+                    if succ not in marked:
+                        bcost = bestCostTo.get(succ, None)
+                        if bcost:
+                            if bestCostTo[curr] + cost < bcost:
+                                pathTo[succ] = curr
+                                actionTo[succ] = action
+                                bestCostTo[succ] = bestCostTo[curr] + cost
+                                mylayout[problem.walls.height - succ[1], succ[0]] = bestCostTo[succ]
+                                st.push((succ, curr_d + 1))
+                        else:
+                            pathTo[succ] = curr
+                            actionTo[succ] = action
+                            bestCostTo[succ] = bestCostTo[curr] + cost
+                            mylayout[problem.walls.height - succ[1], succ[0]] = bestCostTo[succ]
+                            st.push((succ, curr_d + 1))
+                    elif bestCostTo.get(succ, None) and bestCostTo[curr] + cost < bestCostTo.get(succ, None):
                         pathTo[succ] = curr
                         actionTo[succ] = action
                         bestCostTo[succ] = bestCostTo[curr] + cost
                         mylayout[problem.walls.height - succ[1], succ[0]] = bestCostTo[succ]
                         st.push((succ, curr_d + 1))
+                #print "stack = ", st.list
         depth+=1
+        
         for i in range(problem.walls.height):
             for j in range(problem.walls.width):
                 if problem.walls[j][i]:
@@ -188,7 +207,7 @@ def iterativeDeepeningSearch(problem):
                         mylayout[problem.walls.height - i, j] = -1
                     except:
                         print ""
-
+        
         for i in range(mylayout.shape[0]):
             print (list(map(lambda x: str(int(x)).zfill(2), list(mylayout[i]))))
 
