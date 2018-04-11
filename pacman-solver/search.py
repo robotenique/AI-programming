@@ -1,3 +1,4 @@
+# Juliano Garcia de Oliveira NUSP 9277086
 # search.py
 # ---------
 # Licensing Information:  You are free to use or extend these projects for
@@ -19,6 +20,7 @@ Pacman agents (in searchAgents.py).
 
 import util
 import math
+import random
 class SearchProblem:
     """
     This class outlines the structure of a search problem, but doesn't implement
