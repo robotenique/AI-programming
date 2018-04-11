@@ -106,9 +106,6 @@ def depthFirstSearch(problem):
 
     return action_path[::-1]
 
-
-
-
 def breadthFirstSearch(problem):
     marked = set()
     q = util.Queue()
@@ -207,9 +204,41 @@ def nullHeuristic(state, problem=None):
 
 def aStarSearch(problem, heuristic=nullHeuristic):
     """Search the node that has the lowest combined cost and heuristic first."""
-    # "*** YOUR CODE HERE ***"
-    # util.raiseNotDefined()
-    return []
+    marked = set()
+    pq = util.PriorityQueue()
+    root = problem.getStartState()
+    bestCostTo = {root: 0}
+    pathTo = {root : []}
+    actionTo = {root : []}
+    pq.push(root, bestCostTo[root] + heuristic(root, problem=problem))
+    goal_state = None
+    marked.add(root)
+    while not pq.isEmpty():
+        curr = pq.pop()
+        if problem.isGoalState(curr):
+            goal_state = curr
+            break
+        for succ, action, cost in problem.getSuccessors(curr):
+            bcost = bestCostTo.get(succ, None)
+            if succ not in marked:
+                marked.add(succ)
+                pathTo[succ] = curr
+                actionTo[succ] = action
+                bestCostTo[succ] = bestCostTo[curr] + cost
+                pq.push(succ, bestCostTo[succ] + heuristic(succ, problem=problem))
+
+    if goal_state == None:
+        raise AssertionError("No valid path found!!")
+
+    path = [goal_state]
+    action_path = []
+    while goal_state != root:
+        if pathTo[goal_state]:
+            path.append(pathTo[goal_state])
+            action_path.append(actionTo[goal_state])
+        goal_state = pathTo[goal_state]
+
+    return action_path[::-1]
 
 
 # Abbreviations
