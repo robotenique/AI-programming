@@ -206,28 +206,26 @@ def nullHeuristic(state, problem=None):
 
 def aStarSearch(problem, heuristic=nullHeuristic):
     """Search the node that has the lowest combined cost and heuristic first."""
-    marked = set()
     pq = util.PriorityQueue()
     root = problem.getStartState()
     bestCostTo = {root: 0}
     pathTo = {root : []}
     actionTo = {root : []}
     pq.push(root, bestCostTo[root] + heuristic(root, problem=problem))
-    goal_state = None
-    marked.add(root)
+    goal_state = None    
     while not pq.isEmpty():
         curr = pq.pop()
         if problem.isGoalState(curr):
             goal_state = curr
             break
         for succ, action, cost in problem.getSuccessors(curr):
-            bcost = bestCostTo.get(succ, None)
-            if succ not in marked:
-                marked.add(succ)
+            new_cost = bestCostTo[curr] + cost
+            if bestCostTo.get(succ, None) == None or new_cost < bestCostTo[succ]:            
                 pathTo[succ] = curr
                 actionTo[succ] = action
-                bestCostTo[succ] = bestCostTo[curr] + cost
-                pq.push(succ, bestCostTo[succ] + heuristic(succ, problem=problem))
+                bestCostTo[succ] = new_cost
+                pq.update(succ, new_cost + heuristic(succ, problem=problem))
+            
 
     if goal_state == None:
         raise AssertionError("No valid path found!!")
