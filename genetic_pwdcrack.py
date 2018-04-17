@@ -1,5 +1,24 @@
 import random as rnd
 
+def compute_perf_pop(population, password):
+	populationPerf = {ind:fitness(password, ind) for ind in population}
+	# Sort by fitness, reversed (best ones in the beginning of the list)
+	return sorted(populationPerf.items(), key= lambda it: it[1], reverse=True)
+
+def select_from_population(pop_sorted, best_sample, lucky_few):
+	next_gen = []
+
+	for i in range(best_sample):
+		next_gen.append(pop_sorted[i][0])
+	# Simple lucky few: randomly select some elements from the population
+	for i in range(lucky_few):
+		next_gen.append(rnd.choice(pop_sorted)[0])
+
+	rnd.shuffle(next_gen)
+
+	return next_gen
+
+
 def word_generate(length):
     """
     Generate a string with random lowercase letters, with length = length!
@@ -13,8 +32,6 @@ def initial_pop(size, password):
     length as the password, and the population has the size specified.
     """
     return [word_generate(len(password)) for _ in range(size)]
-
-
 
 
 def fitness (password, test_word):
