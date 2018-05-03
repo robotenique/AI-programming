@@ -12,12 +12,12 @@ def main():
     """
     #variables dict: Define the problem constants
     genetic_variables = {
-        'password' : "ohbravenewworld",
+        'password' : "verylongwordpass",
         'size_population' : 100,
         'best_sample' : 20,
         'lucky_few' : 20,
         'number_of_child' : 5,
-        'number_of_generations' : 10000,
+        'number_of_generations' : 10000, #Overkill >:D
         'chance_of_mutation' : .5
     }
     prob = genetic_variables
