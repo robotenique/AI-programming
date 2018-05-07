@@ -13,10 +13,8 @@
 
 
 from util import manhattanDistance
-from game import Directions
-import random, util
-import numpy as np
-from game import Agent
+import random, util, math
+from game import Agent, Actions, Directions, Configuration
 
 class ReflexAgent(Agent):
     """
@@ -46,12 +44,14 @@ class ReflexAgent(Agent):
         bestScore = max(scores)
 
         bestIndices = [index for index in range(len(scores)) if scores[index] == bestScore]
-        chosenIndex = random.choice(bestIndices) # Pick randomly among the best
+        chosenIndex = bestIndices[0] # Pick randomly among the best
         "Add more of your code here if you want to"
-        print(" eaeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee ")
+        print(legalMoves)
         print(scores)
-        print(legalMoves[chosenIndex])
+        print("Choosen: ", legalMoves[chosenIndex])
         return legalMoves[chosenIndex]
+
+
 
     def evaluationFunction(self, currentGameState, action):
         """
@@ -70,47 +70,101 @@ class ReflexAgent(Agent):
         """
         # Useful information you can extract from a GameState (pacman.py)
 
-
         successorGameState = currentGameState.generatePacmanSuccessor(action)
-        print("GAME STATE:")
-        print(successorGameState)
+        currPos = currentGameState.getPacmanPosition()
         newPos = successorGameState.getPacmanPosition()
-        print("POS:")
-        print(newPos)
-        newFood = successorGameState.getFood()
-        print("FOOD:")
-        print(type(newFood[0][0]))
-        print(newFood.width)
-        print(newFood.height)
-        mh_matrix = []
-        best_pos = None
-        min_dist = float("inf")        
-        for _ in range(newFood.width):
-            mh_matrix.append([float("inf") for _ in range(newFood.height)])        
-        for i in range(newFood.height):
-            for j in range(newFood.width):                  
-                if newFood[j][i]:                    
-                    mh_matrix[j][i] = manhattanDistance(newPos, (j, i))
-                    if mh_matrix[j][i] < min_dist:
-                        min_dist = mh_matrix[j][i]
-                        best_pos = (j, i)
+        gpos_s = successorGameState.getGhostPositions()
+        best_dist_food = food_dijkstra(successorGameState, newPos)
+        score_food = 1.0/best_dist_food
+        score = score_food
         newGhostStates = successorGameState.getGhostStates()
-        print("GHOST STATE:")
-        print(newGhostStates)
-        print("GHOST POSITIONS:")
-        print(successorGameState.getGhostPositions())
+        print(newPos)
+        print("\n\n")
+        capsules = successorGameState.getCapsules()
+        neighbors_pos = [[newPos[0], newPos[1]], [currPos[0], currPos[1]]]
+        get_neigh = lambda x, y: [[x, y - 1], [x, y + 1], [x + 1, y], [x - 1, y]]
+        # for pos in [[x, y - 1], [x, y + 1], [x + 1, y], [x - 1, y]]:
+        #     x_p, y_p = pos
+        #     if x_p > 0 and x_p < currentGameState.getWalls().width and y_p > 0 and y_p < currentGameState.getWalls().height:
+        #         if not currentGameState.getWalls()[x_p][y_p]:
+        #             neighbors_pos.append(pos)
+        ghosts = gpos_s + currentGameState.getGhostPositions()
+        ng = []
+        full_ghosts = ghosts + ng
+        newGhostStates = successorGameState.getGhostStates()
         newScaredTimes = [ghostState.scaredTimer for ghostState in newGhostStates]
-        print("SCARED TIMES:")
-        print(newScaredTimes)
-        score = 0
-        if min_dist != float("inf"):
-          score = 1.0/min_dist
-        print("NEW POS: ", newPos)
-        print("food:", successorGameState.getFood()[newPos[0]][newPos[1]])
-        if newFood[newPos[0]][newPos[1]]:
-          score += 10
-        "*** YOUR CODE HERE ***"
+        min_d = float("inf")
+        min_ghost = None
+        for i, gp in enumerate(ghosts):
+            new = manhattanDistance(newPos, gp)
+            if new < min_d:
+                min_d = new
+                min_ghost = i
+        print("---------")
+        print("Distancia retornada:", best_dist_food)
+        print(neighbors_pos)
+        print(ghosts)
+        print("---------")
+        for pos in neighbors_pos:
+            for gp in full_ghosts:
+                x_g, y_g = gp
+                x_g = int(x_g)
+                y_g = int(y_g)
+                x, y = pos
+                if x_g == x and y_g == y:
+                    return -float("inf")
+
+        if action == Directions.STOP:
+            return -float("inf")
+        if currentGameState.getFood()[newPos[0]][newPos[1]]:
+            score += 5
+            if min_ghost < len(gpos_s):
+                neighbors_ghost = Actions.getLegalNeighbors(gpos_s[min_ghost], successorGameState.getWalls())
+                if any(n_g == newPos for n_g in neighbors_ghost):
+                    return -float("inf")
+        for cap in capsules:
+            x_c, y_c = cap
+            if x_c == currPos[0] and y_c == currPos[1]:
+                score += 100
+        if min_ghost < len(newScaredTimes) and newScaredTimes[min_ghost] > min_d:
+            score += 10/min_d
+        else:
+            score -= 1.0/min_d
         return score
+
+def food_dijkstra(game_state, start):
+    graph = game_state.getWalls()
+    food = game_state.getFood()
+    dist_to = []
+    path_to = []
+    is_out = {}
+    found_food = False
+    best_dist = float("inf")
+    for _ in range(graph.width):
+        dist_to.append([float("inf") for _ in range(graph.height)])
+        path_to.append([None for _ in range(graph.height)])
+    dist_to[start[0]][start[1]] = 0
+    pq = util.PriorityQueue()
+    for x in range(graph.width):
+        for y in range(graph.height):
+            if not graph[x][y]:
+                pq.update((x, y), dist_to[x][y])
+    while not pq.isEmpty():
+        curr = pq.pop()
+        is_out[curr] = True
+        if food[curr[0]][curr[1]]:
+            best_dist = dist_to[curr[0]][curr[1]]
+            break
+        neighbors = Actions.getLegalNeighbors(curr, graph)
+        for v in neighbors:
+            if not is_out.get(v, False):
+                alt = dist_to[curr[0]][curr[1]] + 1
+                if alt < dist_to[v[0]][v[1]]:
+                    dist_to[v[0]][v[1]] = alt
+                    path_to[v[0]][v[1]] = curr
+                    pq.update(v, alt)
+
+    return best_dist
 
 def scoreEvaluationFunction(currentGameState):
     """
