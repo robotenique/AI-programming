@@ -44,11 +44,13 @@ class ReflexAgent(Agent):
         # Choose one of the best actions
         scores = [self.evaluationFunction(gameState, action) for action in legalMoves]
         bestScore = max(scores)
+
         bestIndices = [index for index in range(len(scores)) if scores[index] == bestScore]
         chosenIndex = random.choice(bestIndices) # Pick randomly among the best
-
         "Add more of your code here if you want to"
-
+        print(" eaeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee ")
+        print(scores)
+        print(legalMoves[chosenIndex])
         return legalMoves[chosenIndex]
 
     def evaluationFunction(self, currentGameState, action):
@@ -78,13 +80,20 @@ class ReflexAgent(Agent):
         newFood = successorGameState.getFood()
         print("FOOD:")
         print(type(newFood[0][0]))
+        print(newFood.width)
+        print(newFood.height)
         mh_matrix = []
-        for _ in range(newFood.height):
-            mh_matrix.append([float("inf") for _ in range(newFood.width)])
+        best_pos = None
+        min_dist = float("inf")        
+        for _ in range(newFood.width):
+            mh_matrix.append([float("inf") for _ in range(newFood.height)])        
         for i in range(newFood.height):
-            for j in range(newFood.width):
-                if newFood[i][j]:
-                    pass
+            for j in range(newFood.width):                  
+                if newFood[j][i]:                    
+                    mh_matrix[j][i] = manhattanDistance(newPos, (j, i))
+                    if mh_matrix[j][i] < min_dist:
+                        min_dist = mh_matrix[j][i]
+                        best_pos = (j, i)
         newGhostStates = successorGameState.getGhostStates()
         print("GHOST STATE:")
         print(newGhostStates)
@@ -93,9 +102,15 @@ class ReflexAgent(Agent):
         newScaredTimes = [ghostState.scaredTimer for ghostState in newGhostStates]
         print("SCARED TIMES:")
         print(newScaredTimes)
-
+        score = 0
+        if min_dist != float("inf"):
+          score = 1.0/min_dist
+        print("NEW POS: ", newPos)
+        print("food:", successorGameState.getFood()[newPos[0]][newPos[1]])
+        if newFood[newPos[0]][newPos[1]]:
+          score += 10
         "*** YOUR CODE HERE ***"
-        return successorGameState.getScore()
+        return score
 
 def scoreEvaluationFunction(currentGameState):
     """
