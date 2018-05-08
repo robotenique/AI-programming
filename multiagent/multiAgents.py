@@ -15,7 +15,8 @@
 from util import manhattanDistance
 import random, util, math
 from game import Agent, Actions, Directions, Configuration
-from time import sleep #TODO: Remove this
+
+import time # TODO: REMOVE
 class ReflexAgent(Agent):
     """
       A reflex agent chooses an action at each choice point by examining
@@ -46,9 +47,9 @@ class ReflexAgent(Agent):
         bestIndices = [index for index in range(len(scores)) if scores[index] == bestScore]
         chosenIndex = bestIndices[0] # Pick randomly among the best
         "Add more of your code here if you want to"
-        print(legalMoves)
-        print(scores)
-        print("Choosen: ", legalMoves[chosenIndex])
+        # print(legalMoves)
+        # print(scores)
+        # print("Choosen: ", legalMoves[chosenIndex])
         return legalMoves[chosenIndex]
 
 
@@ -80,8 +81,8 @@ class ReflexAgent(Agent):
         score_food = 1.0/best_dist_food
         score = score_food
         newGhostStates = successorGameState.getGhostStates()
-        print(newPos)
-        print("\n\n")
+        # print(newPos)
+        # print("\n\n")
         capsules = successorGameState.getCapsules()
         neighbors_pos = [[newPos[0], newPos[1]], [currPos[0], currPos[1]]]
         get_neigh = lambda x, y: [[x, y - 1], [x, y + 1], [x + 1, y], [x - 1, y]]
@@ -102,11 +103,11 @@ class ReflexAgent(Agent):
             if new < min_d:
                 min_d = new
                 min_ghost = i
-        print("---------")
-        print("Distancia retornada:", best_dist_food)
-        print(neighbors_pos)
-        print(ghosts)
-        print("---------")
+        # print("---------")
+        # print("Distancia retornada:", best_dist_food)
+        # print(neighbors_pos)
+        # print(ghosts)
+        # print("---------")
         for pos in neighbors_pos:
             for gp in full_ghosts:
                 x_g, y_g = gp
@@ -118,6 +119,7 @@ class ReflexAgent(Agent):
 
         if action == Directions.STOP:
             return -float("inf")
+
         if currentGameState.getFood()[newPos[0]][newPos[1]]:
             score += 5
             if min_ghost < len(gpos_s):
@@ -225,14 +227,12 @@ class MinimaxAgent(MultiAgentSearchAgent):
         next_agent = 1
         bval = -float("inf")
         baction = None
-        sleep(0.1)
         for a in gameState.getLegalActions(0):
             next_state = gameState.generateSuccessor(0, a)
             result = self.minimax(next_state, next_depth, next_agent)
             if result > bval:
                 bval = result
                 baction = a
-        print(bval)
         return baction
 
     def minimax(self, gameState, depth, agent_index):
@@ -268,7 +268,51 @@ class AlphaBetaAgent(MultiAgentSearchAgent):
           Returns the minimax action using self.depth and self.evaluationFunction
         """
         "*** YOUR CODE HERE ***"
-        util.raiseNotDefined()
+        alpha = -float("inf")
+        beta = float("inf")
+        next_depth = 0
+        next_agent = 1
+        bval = -float("inf")
+        baction = None
+        for a in gameState.getLegalActions(0):
+            next_state = gameState.generateSuccessor(0, a)
+            result = self.minimax_alpha_beta(next_state, next_depth, next_agent, alpha, beta)
+            if result > bval:
+                bval = result
+                baction = a
+            if bval > beta:
+                return baction
+            alpha = max(alpha, bval)
+        return baction
+
+    def minimax_alpha_beta(self, gameState, depth, agent_index, alpha, beta):
+        MAX = agent_index == 0
+        MIN = agent_index > 0
+        actions = gameState.getLegalActions(agent_index)
+        if depth == self.depth or actions == []:
+            return self.evaluationFunction(gameState)
+        if MAX:
+            bval = -float("inf")
+            for a in actions:
+                next_state = gameState.generateSuccessor(agent_index, a)
+                bval = max(bval, self.minimax_alpha_beta(next_state, depth, agent_index + 1, alpha, beta))
+                if bval > beta:
+                    return bval
+                alpha = max(alpha, bval)
+            return bval
+
+        if MIN:
+            bval = float("inf")
+            next_agent = (agent_index + 1)%gameState.getNumAgents()
+            for a in actions:
+                next_state = gameState.generateSuccessor(agent_index, a)
+                next_depth = depth + 1 if next_agent == 0 else depth
+                bval = min(bval, self.minimax_alpha_beta(next_state, next_depth, next_agent, alpha, beta))
+                if bval < alpha:
+                    return bval
+                beta = min(beta, bval)
+            return bval
+
 
 class ExpectimaxAgent(MultiAgentSearchAgent):
     """
@@ -283,7 +327,48 @@ class ExpectimaxAgent(MultiAgentSearchAgent):
           legal moves.
         """
         "*** YOUR CODE HERE ***"
-        util.raiseNotDefined()
+        # time.sleep(0.5)
+        next_depth = 0
+        next_agent = 1
+        bval = -float("inf")
+        baction = None
+        for a in gameState.getLegalActions(0):
+            next_state = gameState.generateSuccessor(0, a)
+            result = self.expectiminimax(next_state, next_depth, next_agent)
+            if result > bval:
+                bval = result
+                baction = a
+        return baction
+
+
+    def expectiminimax(self, gameState, depth, agent_index):
+        MAX = agent_index == 0
+        CHANCE = agent_index > 0
+
+        actions = gameState.getLegalActions(agent_index)
+        if depth == self.depth or actions == []:
+            return self.evaluationFunction(gameState)
+        if MAX:
+            bval = -float("inf")
+            for a in actions:
+                next_state = gameState.generateSuccessor(agent_index, a)
+                bval = max(bval, self.expectiminimax(next_state, depth, agent_index + 1))
+            return bval
+
+        if CHANCE:
+            if len(actions) > 0:
+                prob = 1.0/len(actions)
+                acc = 0
+            else:
+                return float("inf")
+
+            next_agent = (agent_index + 1)%gameState.getNumAgents()
+            for a in actions:
+                next_state = gameState.generateSuccessor(agent_index, a)
+                next_depth = depth + 1 if next_agent == 0 else depth
+                acc = acc + prob*self.expectiminimax(next_state, next_depth, next_agent)
+            return acc
+
 
 def betterEvaluationFunction(currentGameState):
     """
