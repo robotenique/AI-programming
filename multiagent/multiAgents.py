@@ -15,7 +15,7 @@
 from util import manhattanDistance
 import random, util, math
 from game import Agent, Actions, Directions, Configuration
-
+from time import sleep #TODO: Remove this
 class ReflexAgent(Agent):
     """
       A reflex agent chooses an action at each choice point by examining
@@ -54,6 +54,8 @@ class ReflexAgent(Agent):
 
 
     def evaluationFunction(self, currentGameState, action):
+        #TODO: Refatorar..
+
         """
         Design a better evaluation function here.
 
@@ -219,7 +221,54 @@ class MinimaxAgent(MultiAgentSearchAgent):
             Returns the total number of agents in the game
         """
         "*** YOUR CODE HERE ***"
-        util.raiseNotDefined()
+        next_depth = 0
+        next_agent = 1
+        bval = -float("inf")
+        baction = None
+        sleep(0.1)
+        for a in gameState.getLegalActions(0):
+            next_state = gameState.generateSuccessor(0, a)
+            result = self.minimax(next_state, next_depth, next_agent)
+            if result > bval:
+                bval = result
+                baction = a
+        print(bval)
+        if baction == None:
+            raise ValueError("Azideia...   ")
+        return baction
+
+    def minimax(self, gameState, depth, agent_index):
+        MAX = agent_index == 0
+        MIN = agent_index > 0
+        if MAX:
+            print("Chamada MINIMAX (MAX): ", depth, agent_index)
+        else:
+            print("Chamada MINIMAX (MIN): ", depth, agent_index)
+
+
+        actions = gameState.getLegalActions(agent_index)
+        if depth == self.depth or actions == []:
+            print("Folha, retorna: ", self.evaluationFunction(gameState))
+            return self.evaluationFunction(gameState)
+        if MAX:
+            bval = -float("inf")
+            for a in actions:
+                next_state = gameState.generateSuccessor(agent_index, a)
+                bval = max(bval, self.minimax(next_state, depth, agent_index + 1))
+            print("RETORNANDO: ", bval)
+            return bval
+
+        if MIN:
+            bval = float("inf")
+            next_agent = (agent_index + 1)%gameState.getNumAgents()
+            for a in actions:
+                next_state = gameState.generateSuccessor(agent_index, a)
+                next_depth = depth + 1 if next_agent == 0 else depth
+                bval = min(bval, self.minimax(next_state, next_depth, next_agent))
+            print("RETORNANDO: ", bval)
+            return bval
+
+        raise ValueError("Isto nao devia acontecer...")
 
 class AlphaBetaAgent(MultiAgentSearchAgent):
     """
