@@ -233,29 +233,19 @@ class MinimaxAgent(MultiAgentSearchAgent):
                 bval = result
                 baction = a
         print(bval)
-        if baction == None:
-            raise ValueError("Azideia...   ")
         return baction
 
     def minimax(self, gameState, depth, agent_index):
         MAX = agent_index == 0
         MIN = agent_index > 0
-        if MAX:
-            print("Chamada MINIMAX (MAX): ", depth, agent_index)
-        else:
-            print("Chamada MINIMAX (MIN): ", depth, agent_index)
-
-
         actions = gameState.getLegalActions(agent_index)
         if depth == self.depth or actions == []:
-            print("Folha, retorna: ", self.evaluationFunction(gameState))
             return self.evaluationFunction(gameState)
         if MAX:
             bval = -float("inf")
             for a in actions:
                 next_state = gameState.generateSuccessor(agent_index, a)
                 bval = max(bval, self.minimax(next_state, depth, agent_index + 1))
-            print("RETORNANDO: ", bval)
             return bval
 
         if MIN:
@@ -265,10 +255,8 @@ class MinimaxAgent(MultiAgentSearchAgent):
                 next_state = gameState.generateSuccessor(agent_index, a)
                 next_depth = depth + 1 if next_agent == 0 else depth
                 bval = min(bval, self.minimax(next_state, next_depth, next_agent))
-            print("RETORNANDO: ", bval)
             return bval
 
-        raise ValueError("Isto nao devia acontecer...")
 
 class AlphaBetaAgent(MultiAgentSearchAgent):
     """
