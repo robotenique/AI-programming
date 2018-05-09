@@ -16,7 +16,9 @@ from util import manhattanDistance
 import random, util, math
 from game import Agent, Actions, Directions, Configuration
 
-import time # TODO: REMOVE
+from pacman import * # TODO: REMOVE
+
+import random as r
 class ReflexAgent(Agent):
     """
       A reflex agent chooses an action at each choice point by examining
@@ -227,7 +229,11 @@ class MinimaxAgent(MultiAgentSearchAgent):
         next_agent = 1
         bval = -float("inf")
         baction = None
-        for a in gameState.getLegalActions(0):
+        t = gameState.getLegalActions(0)
+        if "Stop" in t:
+            t.remove("Stop")
+
+        for a in t:
             next_state = gameState.generateSuccessor(0, a)
             result = self.minimax(next_state, next_depth, next_agent)
             if result > bval:
@@ -239,6 +245,9 @@ class MinimaxAgent(MultiAgentSearchAgent):
         MAX = agent_index == 0
         MIN = agent_index > 0
         actions = gameState.getLegalActions(agent_index)
+        if "Stop" in actions:
+            actions.remove("Stop")
+
         if depth == self.depth or actions == []:
             return self.evaluationFunction(gameState)
         if MAX:
@@ -274,7 +283,10 @@ class AlphaBetaAgent(MultiAgentSearchAgent):
         next_agent = 1
         bval = -float("inf")
         baction = None
-        for a in gameState.getLegalActions(0):
+        t = gameState.getLegalActions(0)
+        if "Stop" in t:
+            t.remove("Stop")
+        for a in t:
             next_state = gameState.generateSuccessor(0, a)
             result = self.minimax_alpha_beta(next_state, next_depth, next_agent, alpha, beta)
             if result > bval:
@@ -289,6 +301,8 @@ class AlphaBetaAgent(MultiAgentSearchAgent):
         MAX = agent_index == 0
         MIN = agent_index > 0
         actions = gameState.getLegalActions(agent_index)
+        if "Stop" in actions:
+            actions.remove("Stop")
         if depth == self.depth or actions == []:
             return self.evaluationFunction(gameState)
         if MAX:
@@ -327,32 +341,51 @@ class ExpectimaxAgent(MultiAgentSearchAgent):
           legal moves.
         """
         "*** YOUR CODE HERE ***"
-        # time.sleep(0.5)
+        # print("\n=======================")
+        # print("CHAMANDO better() para estado atual.")
+        # better(gameState)
+        # for a in gameState.getLegalActions(0):
+        #     print("CHAMANDO better() para estado proximo fazendo", a)
+        #     better(gameState.generateSuccessor(0, a))
+        # print("=======================\n")
+        # __import__("time").sleep(1)
         next_depth = 0
         next_agent = 1
-        bval = -float("inf")
-        baction = None
+        results = [] # List of vals
+        actions = [] # List of actions to achieve that vals
         for a in gameState.getLegalActions(0):
             next_state = gameState.generateSuccessor(0, a)
             result = self.expectiminimax(next_state, next_depth, next_agent)
-            if result > bval:
-                bval = result
-                baction = a
-        return baction
+            results.append(result)
+            actions.append(a)
+
+        best_action = [actions[i] for i in range(len(actions)) if results[i] == max(results)]
+
+        if len(best_action) > 1 and "Stop" in best_action:
+            best_action.remove("Stop")
+
+        return best_action[0]
 
 
     def expectiminimax(self, gameState, depth, agent_index):
+        #__import__("time").sleep(0.7)
+
         MAX = agent_index == 0
         CHANCE = agent_index > 0
-
+        # if MAX:
+            # print("CHAMADA MINIMAX (MAX): ", depth, agent_index)
+        # elif CHANCE:
+            # print("CHAMADA MINIMAX (CHANCE): ", depth, agent_index)
         actions = gameState.getLegalActions(agent_index)
         if depth == self.depth or actions == []:
+            # print("node folha, retorna: ", self.evaluationFunction(gameState))
             return self.evaluationFunction(gameState)
         if MAX:
             bval = -float("inf")
             for a in actions:
                 next_state = gameState.generateSuccessor(agent_index, a)
                 bval = max(bval, self.expectiminimax(next_state, depth, agent_index + 1))
+            # print("Retornando (max): ", bval)
             return bval
 
         if CHANCE:
@@ -360,6 +393,7 @@ class ExpectimaxAgent(MultiAgentSearchAgent):
                 prob = 1.0/len(actions)
                 acc = 0
             else:
+                # print("Retornando (CHANCE) infinito, pois nao tem acao pra fazer...")
                 return float("inf")
 
             next_agent = (agent_index + 1)%gameState.getNumAgents()
@@ -367,6 +401,7 @@ class ExpectimaxAgent(MultiAgentSearchAgent):
                 next_state = gameState.generateSuccessor(agent_index, a)
                 next_depth = depth + 1 if next_agent == 0 else depth
                 acc = acc + prob*self.expectiminimax(next_state, next_depth, next_agent)
+            # print("Tirei a media, retornando (CHANCE): ", acc)
             return acc
 
 
@@ -378,7 +413,64 @@ def betterEvaluationFunction(currentGameState):
       DESCRIPTION: <write something here so we know what you did>
     """
     "*** YOUR CODE HERE ***"
-    util.raiseNotDefined()
+    cgs = currentGameState
+    # cgs = GameState()
+    if cgs.isWin():
+        return float("inf")
+    elif cgs.isLose():
+        return -float("inf")
 
+    pacpos = cgs.getPacmanPosition()
+    score = cgs.getScore()
+    capsules = cgs.getCapsules()
+    foods = cgs.getFood()
+    ghosts = cgs.getGhostPositions()
+    if foods.asList() != []:
+        dist2_closest_food = min(map(lambda f: manhattanDistance(pacpos, f), foods.asList()))
+    else:
+        # If the state has no food left, it doesn't matter for future states
+        dist2_closest_food =  0
+
+
+    num_foods = len(foods.asList())
+    num_capsules = len(capsules)
+    # Ghosts
+    scared_times = [g_state.scaredTimer for g_state in cgs.getGhostStates()]
+    ghost_matrix = [[g, sc_t] for g, sc_t in zip(ghosts, scared_times)]
+    dist_ghost = lambda e: manhattanDistance(pacpos, e[0])
+    awoke_g = []
+    scared_g = []
+    for g in ghost_matrix:
+        if g[1] == 0:
+            awoke_g.append(g)
+        else:
+            scared_g.append(g)
+
+
+    if list(awoke_g):
+        dist2_closest_awokeGhost = dist_ghost(min(awoke_g, key = dist_ghost))
+    else:
+        dist2_closest_awokeGhost = float("inf")
+    if list(scared_g):
+        dist2_closest_scaredGhost = dist_ghost(min(scared_g, key = dist_ghost))
+    else: # If there isn't a scared ghost, this doesn't impact in the evaluation (the capsules will)
+        dist2_closest_scaredGhost = 0
+    # print("returns: ", score, dist2_closest_food, num_capsules, 1.0/dist2_closest_awokeGhost, dist2_closest_scaredGhost, num_capsules, num_foods, (score + -2*dist2_closest_food + -15*num_capsules +
+    #         -1.7*(1.0/dist2_closest_awokeGhost) +
+    #         -2*dist2_closest_scaredGhost +
+    #         -17*num_capsules +
+    #         -5*num_foods
+    #         ))
+    type_1 = (score +
+            -2*dist2_closest_food +
+            -1.7*(1.0/dist2_closest_awokeGhost) +
+            -5*dist2_closest_scaredGhost +
+            -20*num_capsules +
+            -5*num_foods
+            )
+    type_2 = (score -2*dist2_closest_food)
+    type_3 = (4*score-2*dist2_closest_food)
+    #print("returns:", dist2_closest_food, type_3)
+    return type_1
 # Abbreviation
 better = betterEvaluationFunction
