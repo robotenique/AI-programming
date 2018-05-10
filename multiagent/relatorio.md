@@ -40,6 +40,7 @@ output:
 
     Levar em conta os possíveis movimentos dos fantasmas, quantidade de comida, possivelmente caminhos entre os fantasmas de modo a minimizar a chance de ser encurralado, limpar uma parte mais "cheia" do mapa primeiro, etc.
 
+\pagebreak
 
 5. (alpha e beta)  Faça uma comparação entre os agentes Minimax e AlphaBeta em termos de tempo e número de nós explorados para profundidades 2, 3 e 4.
 
@@ -57,8 +58,7 @@ output:
     | 3      |  29325 | 20332 |
     | 4      | 278350 | 180445 |
 
-    Dividindo os resultados do Minimax pelo AlphaBeta, temos, em ambos os casos, uma razão por volta de 1.5, na maioria dos casos.
-
+    Dividindo os resultados do Minimax pelo AlphaBeta, temos, em ambos os casos, uma razão por volta de 1.5 aproximadamente.
 
 6. (expectimax) Por que o comportamento do expectimax é diferente do minimax?
 
