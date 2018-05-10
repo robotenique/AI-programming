@@ -13,6 +13,8 @@ output:
 ---
 
 [//]: # pandoc -s -o teste.pdf relatorio.md  && evince teste.pdf
+**OBS:** O meu EP usa a *Priority Queue* com a função *update()*, então modifiquei o arquivo *util.py*. Poderia ter criado uma classe que herda de PQ e adiciona esse novo método, mas acho que mudar direto a definição de PQ é melhor.
+
 ### Questões
 
 1. (reativo) Como é o desempenho do seu agente? É provável que muitas vezes ele morra com 2 fantasmas no tabuleiro default, a não ser que a sua função de avaliação seja muito boa.
@@ -63,3 +65,20 @@ output:
 6. (expectimax) Por que o comportamento do expectimax é diferente do minimax?
 
     Porque o Minimax considera que os fantasmas são jogadores ótimos, enquanto no expectimax os fantasmas são considerados como jogadores aleatórios, isto é, não estão tentando minimizar a recompensa do Pac-Man, eles apenas escolhem uma de suas ações válidas aleatoriamente, e o Expectimax usa essa informação para calcular a média ponderada de cada estado, e pegar o estado que dê o maior valor (recursivamente), e é limitado pela profundidade, assim como o Minimax.
+
+7. (função de avaliação) Inclua uma explicação sobre a sua função de avaliação.
+
+    A minha função de avaliação de estados leva em conta basicamente as seguintes variáveis de um estado:
+
+    - $a$ = *score* do estado
+    - $b$ = quantidade de cápsulas no estado
+    - $c$ = quantidade de *foods*    
+    - $d$ = distância até a *food* mais próxima
+    - $e$ = distância até o *ghost* mais próximo que não está *scared*
+    - $f$ = distância até o *ghost* mais próximo no estado *scared*
+
+    A função de avaliação retorna a seguinte combinação linear desses valores:
+
+    $eval(estado) = a - 2\cdot d -1.7\cdot \frac{1}{e} -5\cdot f -20\cdot b -5\cdot c$
+
+    Os valores foram escolhidos com base em alguns testes e na importância de cada um, de acordo com a estratégia que quero tomar. Inicialmente, uso o valor do *score* e subtraio alguns valores dele. Subtraindo a distância até a *food* mais próxima, quanto mais próximo de uma *food* o Pac-Man está, menos ele subtrai, portanto maior é o valor da função. Como estar próximo de um fantasma que não está *scared* é ruim, pego o inverso desse valor e subtraio, portanto quanto mais perto de um fantasma o Pac-Man está naquele estado, maior será $\frac{1}{e}$, portanto será subtraído um numero maior, logo a função de avaliação é menor quanto mais próximo de um fantasma o Pac-Man está (isto é, estados onde o Pac-Man fica mais próximo de um fantasma não são desejáveis). Da mesma forma que a distância até a *food* mais próxima, se o Pac-Man está perto de um *ghost* que está *scared*, é desejável que ele fique mais próximo dele para comê-lo e obter mais pontos. E como ele ganha mais pontos comendo um fantasma, dei um peso maior para essa variável do que a distância até a comida. Em seguida, para a quantidade de cápsulas dei um peso razoavelmente grande, porque comer cápsulas permite comer fantasmas, o que pode dar bastante pontos. Mas o peso dessa variável não é tão grande a ponto de fazer o Pac-Man sempre preferir comer uma cápsula do que uma *food*. E finalmente, dou um peso razoável para a quantidade de comidas, assim quanto menos comidas tiver no estado, melhor será o estado segundo essa função de avaliação, levando o Pac-Man a comer sempre que puder.
