@@ -1,7 +1,32 @@
+"""
+This simple program solves the missionaries and three cannibals problem,
+using a Breadth-First-Search algorithm (BFS).
+
+
+The problem is stated as follows:
+
+"On one bank of a river are three missionaries and three cannibals. 
+There is one boat available that can hold up to two people and that
+they would like to use to cross the river. If the cannibals ever
+outnumber the missionaries on either of the river’s banks, the 
+missionaries will get eaten. 
+
+How can the boat be used to safely carry all the missionaries 
+and cannibals across the river?"
+
+"""
 import numpy as np
 from collections import deque
 
 class Node(object):
+    """To solve the problem, we create a tree. Each node of the tree has
+       a parent, a signal (which represents if the boat is going to the 
+       other side or returning), and the value, which is an array with 
+       three positions, each representing an information of the state:
+       Position 0: Represents the number of missionaries
+       Position 1: Represents the number of cannibals
+       Position 2: Represents if the boat is available (0 or 1)
+     """
     actions = [[1, 0, 1], [2, 0, 1], [0, 1, 1], [0, 2, 1], [1, 1, 1]]
     goal = []
     g_nodes = set()
