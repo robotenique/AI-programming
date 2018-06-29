@@ -236,7 +236,6 @@ class MinimaxAgent(MultiAgentSearchAgent):
             if result > bval:
                 bval = result
                 baction = a
-        prin__import__("pacman").GameState
         return baction
 
     def minimax(self, gameState, depth, agent_index):
