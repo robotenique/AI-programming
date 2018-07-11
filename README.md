@@ -36,7 +36,7 @@ In the *search-agents* folder, I implemented four different Pacman agents, each 
 
 <p align="center"> <img src="multimedia/imgDemo/a_star.png"/></p>
     
--**multiagents**
+- **multiagents**
 
 In the *multiagents* folder, I implemented classical algorithms based in Game Theory. The agents implemented this time used the **Minimax** algorithm, the **Expectimax** algorithm, and then I implemented the **Alpha-Beta Prunning** for both Minimax and Expectimax algorithms, to reduce the number of nodes in the game tree that needed to be explored. The implementation of each of these agents is in the **multiAgents.py** file.
 
