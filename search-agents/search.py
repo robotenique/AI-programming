@@ -212,7 +212,7 @@ def aStarSearch(problem, heuristic=nullHeuristic):
     pathTo = {root : []}
     actionTo = {root : []}
     pq.push(root, bestCostTo[root] + heuristic(root, problem=problem))
-    goal_state = None    
+    goal_state = None
     while not pq.isEmpty():
         curr = pq.pop()
         if problem.isGoalState(curr):
@@ -220,12 +220,12 @@ def aStarSearch(problem, heuristic=nullHeuristic):
             break
         for succ, action, cost in problem.getSuccessors(curr):
             new_cost = bestCostTo[curr] + cost
-            if bestCostTo.get(succ, None) == None or new_cost < bestCostTo[succ]:            
+            if bestCostTo.get(succ, None) == None or new_cost < bestCostTo[succ]:
                 pathTo[succ] = curr
                 actionTo[succ] = action
                 bestCostTo[succ] = new_cost
                 pq.update(succ, new_cost + heuristic(succ, problem=problem))
-            
+
 
     if goal_state == None:
         raise AssertionError("No valid path found!!")
